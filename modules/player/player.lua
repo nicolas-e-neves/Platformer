@@ -109,11 +109,22 @@ function player.setCharacter(characterName)
    player.character = characterName
    player.sprite = love.graphics.newImage("sprites/characters/" .. player.character .. ".png")
 
-   player.collider = WORLD:newRectangleCollider(player.x, player.y, 10, 32)
+   local colliderHeight = 32
+   player.collider = WORLD:newRectangleCollider(player.x, player.y, 10, colliderHeight)
    player.collider:setFixedRotation(true)
    player.collider:setCollisionClass("Player")
    player.collider:setFriction(0)
    player.collider:setMass(1)
+
+   player.collider:setPreSolve(function(collider_1, collider_2, contact)        
+      if collider_1.collision_class == 'Player' and collider_2.collision_class == 'SemiSolid' then
+         local px, py = collider_1:getPosition()
+         local ph = colliderHeight
+         local tx, ty = collider_2:getPosition() 
+         local th = 1
+         if py + ph/2 > ty - th/2 then contact:setEnabled(false) end
+      end
+  end)
 end
 
 
@@ -199,9 +210,9 @@ function player.update(dt)
       player.y + player.size.height / 2 - 1,
       colliderWidth,
       2,
-      {"Solid"}
+      {"Solid", "SemiSolid"}
    )
-   player.onGround = (#colliders > 0)
+   player.onGround = (#colliders > 0) and (velocity.y >= 0)
 
    --> TODO: Jump buffering and coyote time
    --> TODO: Separate in state machines

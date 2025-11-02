@@ -30,6 +30,8 @@ function loadMap(map)
    PALETTES.character = love.graphics.newImage("sprites/palettes/character/" .. characterPaletteName .. ".png") or PALETTES.character
 
    WALLS = {}
+   WALLS.solid = {}
+   WALLS.semisolid = {}
 
    --> Add walls around the map
    local wall = WORLD:newRectangleCollider(
@@ -39,7 +41,7 @@ function loadMap(map)
       GAME_MAP.height * GAME_MAP.tilewidth + 100
    )
    wall:setType("static")
-   table.insert(WALLS, wall)
+   table.insert(WALLS.solid, wall)
 
    wall = WORLD:newRectangleCollider(
       GAME_MAP.width * GAME_MAP.tilewidth,
@@ -48,7 +50,7 @@ function loadMap(map)
       GAME_MAP.height * GAME_MAP.tilewidth + 100
    )
    wall:setType("static")
-   table.insert(WALLS, wall)
+   table.insert(WALLS.solid, wall)
 
    wall = WORLD:newRectangleCollider(
       -50,
@@ -57,7 +59,7 @@ function loadMap(map)
       50
    )
    wall:setType("static")
-   table.insert(WALLS, wall)
+   table.insert(WALLS.solid, wall)
 
    if GAME_MAP.layers["SolidCollision"] then
       for _, object in pairs(GAME_MAP.layers["SolidCollision"].objects) do
@@ -69,7 +71,21 @@ function loadMap(map)
          )
          wall:setType("static")
          wall:setCollisionClass("Solid")
-         table.insert(WALLS, wall)
+         table.insert(WALLS.solid, wall)
+      end
+   end
+
+   if GAME_MAP.layers["SemiSolidCollision"] then
+      for _, object in pairs(GAME_MAP.layers["SemiSolidCollision"].objects) do
+         wall = WORLD:newRectangleCollider(
+            object.x,
+            object.y,
+            object.width,
+            1
+         )
+         wall:setType("static")
+         wall:setCollisionClass("SemiSolid")
+         table.insert(WALLS.semisolid, wall)
       end
    end
 
@@ -97,11 +113,12 @@ function love.load()
    WORLD = windfield.newWorld(0, GRAVITY)
    WORLD:addCollisionClass("Player")
    WORLD:addCollisionClass("Solid")
+   WORLD:addCollisionClass("SemiSolid")
    
    --> NES screen resolution 256x240
    WINDOW_X, WINDOW_Y = 256 * CAMERA.scale, 240 * CAMERA.scale
    GAME_X, GAME_Y = WINDOW_X / CAMERA.scale, WINDOW_Y / CAMERA.scale
-   FULLSCREEN = false
+   FULLSCREEN = true
 
    love.window.setTitle("Platformer")
    love.window.setMode(WINDOW_X, WINDOW_Y, {fullscreen = FULLSCREEN, resizable = true})
