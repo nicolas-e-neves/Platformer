@@ -87,7 +87,7 @@ return {
       parallaxx = 1,
       parallaxy = 1,
       properties = {
-        ["character"] = "dark",
+        ["character"] = "light",
         ["map"] = "W1_W2_W3_main"
       },
       objects = {}

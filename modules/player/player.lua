@@ -155,7 +155,7 @@ end
 function updateAcceleration(axis, joystick, velocity, dt)
    local direction = (axis == "x") and player.horizontal or player.vertical
 
-   if math.abs(joystick[axis]) > 0 and player.crouching == 0 then
+   if math.abs(joystick[axis]) > 0 and not (player.crouching ~= 0 and player.onGround) then
       local turning = (math.sign(velocity[axis]) ~= math.sign(joystick[axis])) and "Turning" or ""
 
       if player.onGround then

@@ -11,7 +11,7 @@
  </tileset>
  <objectgroup id="10" name="Palette" visible="0">
   <properties>
-   <property name="character" value="dark"/>
+   <property name="character" value="light"/>
    <property name="map" value="W1_W2_W3_main"/>
   </properties>
  </objectgroup>

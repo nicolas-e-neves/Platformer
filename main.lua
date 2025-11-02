@@ -130,11 +130,43 @@ function love.load()
 
    SKY = love.graphics.newImage("sprites/tiles/sky.png")
    PALETTES = {}
-   loadMap("maps/1-1/map2.lua")
+   loadMap("maps/1-1/map1.lua")
 
    SHADERS = {}
    SHADERS.palette = love.graphics.newShader(require("shaders/palette"))
    SHADERS.pixelate = love.graphics.newShader(require("shaders/pixelate"))
+end
+
+
+function clampCamera()
+   local mapWidth = GAME_MAP.width * GAME_MAP.tilewidth
+   local mapHeight = GAME_MAP.height * GAME_MAP.tileheight
+   
+   local minX, minY = GAME_X / 2, GAME_Y / 2
+   local maxX, maxY = mapWidth - GAME_X / 2, mapHeight - GAME_Y / 2
+
+   if minX > maxX then
+      CAMERA.x = mapWidth / 2
+   else
+      if CAMERA.x < GAME_X / 2 then
+         CAMERA.x = GAME_X / 2
+      end
+      if CAMERA.x > mapWidth - GAME_X / 2 then
+         CAMERA.x = mapWidth - GAME_X / 2
+      end
+   end
+
+   if minY > maxY then
+      CAMERA.y = mapHeight / 2
+      return
+   end
+   
+   if CAMERA.y < GAME_Y / 2 then
+      CAMERA.y = GAME_Y / 2
+   end
+   if CAMERA.y > mapHeight - GAME_Y / 2 then
+      CAMERA.y = mapHeight - GAME_Y / 2
+   end
 end
 
 
@@ -147,25 +179,7 @@ function love.update(dt)
    player.x, player.y = player.collider:getPosition()
 
    CAMERA:lookAt(player.x, player.y)
-
-   --[
-   if CAMERA.x < GAME_X / 2 then
-      CAMERA.x = GAME_X / 2
-   end
-   if CAMERA.y < GAME_Y / 2 then
-      CAMERA.y = GAME_Y / 2
-   end
-
-   local mapWidth = GAME_MAP.width * GAME_MAP.tilewidth
-   local mapHeight = GAME_MAP.height * GAME_MAP.tileheight
-
-   if CAMERA.x > mapWidth - GAME_X / 2 then
-      CAMERA.x = mapWidth - GAME_X / 2
-   end
-   if CAMERA.y > mapHeight - GAME_Y / 2 then
-      CAMERA.y = mapHeight - GAME_Y / 2
-   end
-   --]]
+   clampCamera()
 end
 
 
@@ -183,7 +197,7 @@ function love.draw()
    CAMERA:attach()
       GAME_MAP:drawLayer(GAME_MAP.layers["Background"])
       GAME_MAP:drawLayer(GAME_MAP.layers["Solid"])
-      GAME_MAP:drawLayer(GAME_MAP.layers["Doors"])
+      --GAME_MAP:drawLayer(GAME_MAP.layers["Doors"])
 
       SHADERS.pixelate:send("palette", PALETTES.character)
       player.draw()
