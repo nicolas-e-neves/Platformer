@@ -231,6 +231,8 @@ function player.update(dt)
       if CONTROLS.isDown("jump") then --> Continue jump
          if player.jumping > 0 then
             player.jumping = player.jumping + dt
+         else
+            player.holdingJump = true
          end
       else
          player.holdingJump = false
@@ -265,11 +267,13 @@ function player.draw()
    )
 
    --> Debugging
+   --[[
    if player.jumpDone then
       love.graphics.setColor(1,0,0,1)
       love.graphics.circle("fill", player.x, player.y - 20, 5)
       love.graphics.setColor(1,1,1,1)
    end
+   --]]
 end
 
 

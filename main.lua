@@ -98,11 +98,13 @@ function love.load()
    WORLD:addCollisionClass("Player")
    WORLD:addCollisionClass("Solid")
    
-   WINDOW_X, WINDOW_Y = 1280, 720
+   --> NES screen resolution 256x240
+   WINDOW_X, WINDOW_Y = 256 * CAMERA.scale, 240 * CAMERA.scale
    GAME_X, GAME_Y = WINDOW_X / CAMERA.scale, WINDOW_Y / CAMERA.scale
+   FULLSCREEN = false
 
-   love.window.setTitle("Test")
-   love.window.setMode(WINDOW_X, WINDOW_Y, {resizable=true})
+   love.window.setTitle("Platformer")
+   love.window.setMode(WINDOW_X, WINDOW_Y, {fullscreen = FULLSCREEN, resizable = true})
    love.graphics.setDefaultFilter("nearest")
    love.window.setIcon(love.image.newImageData("sprites/Mini DRENICO novo 40x40.png"))
 
@@ -175,5 +177,9 @@ end
 
 
 function love.keypressed(key)
+   if key == "f11" then
+      FULLSCREEN = not FULLSCREEN
+      love.window.setFullscreen(FULLSCREEN)
+   end
    --CONTROLS.updateKey(key)
 end
