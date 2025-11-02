@@ -133,7 +133,7 @@ function love.load()
    SPRITES.door = love.graphics.newImage("sprites/tiles/door.png")
 
    PALETTES = {}
-   loadMap("maps/1-1/map1.lua")
+   loadMap("maps/1-1/map2.lua")
 
    SHADERS = {}
    SHADERS.palette = love.graphics.newShader(require("shaders/palette"))
@@ -160,7 +160,7 @@ function clampCamera()
    end
 
    if minY > maxY then
-      CAMERA.y = mapHeight / 2
+      CAMERA.y = maxY
       return
    end
    
