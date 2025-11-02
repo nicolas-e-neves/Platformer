@@ -6,11 +6,10 @@ player.horizontal = 1
 player.vertical = -1
 
 --> in tiles
---player.jumpHeight = 4
 player.minJumpHeight = 1
 player.maxJumpHeight = 4
-player.maxJumpHoldTime = 4
 player.jumpDone = false
+player.holdingJump = false
 
 player.jumping = 0
 player.onGround = true
@@ -194,7 +193,7 @@ function player.update(dt)
 
    player.collider:applyLinearImpulse(newVelocityX - velocity.x, 0)
 
-   local colliderWidth = 5
+   local colliderWidth = 10
    local colliders = WORLD:queryRectangleArea(
       player.x - colliderWidth / 2,
       player.y + player.size.height / 2 - 1,
@@ -204,7 +203,8 @@ function player.update(dt)
    )
    player.onGround = (#colliders > 0)
 
-   local holdingJump = false
+   --> TODO: Jump buffering and coyote time
+   --> TODO: Separate in state machines
    if player.onGround then
       if CONTROLS.isDown("down") then
          player.crouching = player.crouching + dt
@@ -214,27 +214,35 @@ function player.update(dt)
 
       player.jumpDone = false
       if CONTROLS.isDown("jump") then --> Start jump
-         player.jumping = player.jumping + dt
-         holdingJump = true
-         local impulse = impulseForHeight(player.maxJumpHeight)
-         player.collider:applyLinearImpulse(0, -impulse)
+         if not player.holdingJump then
+            player.jumping = player.jumping + dt
+            player.holdingJump = true
+
+            local impulse = impulseForHeight(player.maxJumpHeight)
+            player.collider:applyLinearImpulse(0, -impulse)
+         else
+            player.jumping = 0
+         end
       else
          player.jumping = 0
-         holdingJump = false
+         player.holdingJump = false
       end
    else
-      if CONTROLS.isDown("jump") and player.jumping > 0 then --> Continue jump
-         player.jumping = player.jumping + dt
+      if CONTROLS.isDown("jump") then --> Continue jump
+         if player.jumping > 0 then
+            player.jumping = player.jumping + dt
+         end
       else
-         holdingJump = false
+         player.holdingJump = false
       end
    end
 
-   if (not player.jumpDone) and (not holdingJump) and (player.jumping > 0) then
+   if (not player.jumpDone) and (not player.holdingJump) and (player.jumping > 0) then
       --> Cut jump short
       local velocity = VECTOR.new(player.collider:getLinearVelocity())
-      if velocity.y < 0 then
-         local desiredVelocityY = -impulseForHeight(player.minJumpHeight)
+      local desiredVelocityY = -impulseForHeight(player.minJumpHeight)
+
+      if velocity.y < desiredVelocityY then
          player.collider:applyLinearImpulse(0, desiredVelocityY - velocity.y)
          player.jumpDone = true
       end
@@ -255,6 +263,13 @@ function player.draw()
       player.horizontal, 1,
       player.size.width / 2, player.size.height / 2
    )
+
+   --> Debugging
+   if player.jumpDone then
+      love.graphics.setColor(1,0,0,1)
+      love.graphics.circle("fill", player.x, player.y - 20, 5)
+      love.graphics.setColor(1,1,1,1)
+   end
 end
 
 
