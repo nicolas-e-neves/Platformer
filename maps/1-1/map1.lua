@@ -9,8 +9,8 @@ return {
   height = 60,
   tilewidth = 16,
   tileheight = 16,
-  nextlayerid = 8,
-  nextobjectid = 9,
+  nextlayerid = 9,
+  nextobjectid = 10,
   properties = {},
   tilesets = {
     {
@@ -275,8 +275,8 @@ return {
         0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 2, 4,
         0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 18, 20,
         0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 18, 20,
-        0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 441, 20,
-        0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 514, 20,
+        0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 18, 20,
+        0, 0, 18, 19, 19, 18, 19, 19, 19, 19, 19, 19, 20, 0, 18, 20,
         2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 36,
         18, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 20
       }
@@ -384,6 +384,35 @@ return {
           y = 928,
           width = 256,
           height = 16,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        }
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 8,
+      name = "Doors",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {},
+      objects = {
+        {
+          id = 9,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 224,
+          y = 896,
+          width = 16,
+          height = 32,
           rotation = 0,
           visible = true,
           properties = {}

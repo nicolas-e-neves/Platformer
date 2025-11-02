@@ -128,7 +128,10 @@ function love.load()
    player = require("modules/player/player")
    player.setCharacter("mario")
 
-   SKY = love.graphics.newImage("sprites/tiles/sky.png")
+   SPRITES = {}
+   SPRITES.sky = love.graphics.newImage("sprites/tiles/sky.png")
+   SPRITES.door = love.graphics.newImage("sprites/tiles/door.png")
+
    PALETTES = {}
    loadMap("maps/1-1/map1.lua")
 
@@ -188,7 +191,7 @@ function love.draw()
    SHADERS.pixelate:send("palette", PALETTES.map)
 
    love.graphics.draw(
-      SKY,
+      SPRITES.sky,
       0, 0,
       0,
       WINDOW_X, WINDOW_Y
@@ -197,7 +200,13 @@ function love.draw()
    CAMERA:attach()
       GAME_MAP:drawLayer(GAME_MAP.layers["Background"])
       GAME_MAP:drawLayer(GAME_MAP.layers["Solid"])
-      --GAME_MAP:drawLayer(GAME_MAP.layers["Doors"])
+      
+      for _, object in pairs(GAME_MAP.layers["Doors"].objects) do
+         love.graphics.draw(
+            SPRITES.door,
+            object.x, object.y
+         )
+      end
 
       SHADERS.pixelate:send("palette", PALETTES.character)
       player.draw()
