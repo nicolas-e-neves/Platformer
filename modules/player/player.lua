@@ -1,23 +1,19 @@
 local player = {}
 player.x = 0
 player.y = 0
-player.size = {width = 16, height = 32}
+player.spriteSize = {width = 16, height = 32}
+player.colliderSize = {width = 10, height = 32}
 player.horizontal = 1
 player.vertical = -1
 
---> in tiles
-player.minJumpHeight = 1
-player.maxJumpHeight = 4
-player.jumpDone = false
-player.holdingJump = false
+player.state = "grounded"
+local states = {
+   jump = require("modules/player/jumpState"), 
+   grounded = require("modules/player/groundedState")
+}
 
-player.jumping = 0
-player.onGround = true
-player.crouching = 0
-player.holdingItem = false
-
-player.state = "idle"
-player.grid = anim8.newGrid(player.size.width, player.size.height, 192, 64)
+player.grid = anim8.newGrid(player.spriteSize.width, player.spriteSize.height, 192, 64)
+player.animationState = "idle"
 player.animations = {
    idle = {
       small = anim8.newAnimation(player.grid('1-1',1), 1),
@@ -30,13 +26,13 @@ player.animations = {
    },
 
    walk = {
-      small = anim8.newAnimation(player.grid('1-2', 1), 0.08),
-      big   = anim8.newAnimation(player.grid('1-2', 2), 0.08)
+      small = anim8.newAnimation(player.grid('1-2', 1), 0.05),
+      big   = anim8.newAnimation(player.grid('1-2', 2), 0.05)
    },
 
    walkpickup = {
-      small = anim8.newAnimation(player.grid('3-4', 1), 0.08),
-      big   = anim8.newAnimation(player.grid('3-4', 2), 0.08)
+      small = anim8.newAnimation(player.grid('3-4', 1), 0.05),
+      big   = anim8.newAnimation(player.grid('3-4', 2), 0.05)
    },
    
    fall = {
@@ -85,18 +81,36 @@ player.animations = {
    }
 }
 
-player.velocity = {x = 0, y = 0}
-player.acceleration = {x = 0, y = 0}
+
+--> in tiles
+player.minJumpHeight = 1
+player.maxJumpHeight = 4
+
+player.jumpDone = false
+player.holdingJump = false
+
+player.jumpBufferDuration = 0.1
+player.jumpBufferTimer = 0
+
+player.jumping = 0
+player.onGround = true
+player.crouching = 0
+player.holdingItem = false
+
+player.health = 2
+player.powerup = "big"
+
+player.acceleration = VECTOR.new(0,0)
 
 player.maxSpeeds = {
-   walking = 50,
-   running = 210
+   walking = 90,
+   running = 130
 }
 
 player.accelerations = {
-   onFoot = 180,
+   onFoot = 320,
    onFootTurning = 600,
-   inAir = 130,
+   inAir = 150,
    inAirTurning = 400
 }
 
@@ -104,13 +118,8 @@ player.deaccelerations = {
    onFoot = 300
 }
 
-
-function player.setCharacter(characterName)
-   player.character = characterName
-   player.sprite = love.graphics.newImage("sprites/characters/" .. player.character .. ".png")
-
-   local colliderHeight = 32
-   player.collider = WORLD:newRectangleCollider(player.x, player.y, 10, colliderHeight)
+function player.updateCollider()
+   player.collider = WORLD:newRectangleCollider(player.x, player.y, player.colliderSize.width, player.colliderSize.height)
    player.collider:setFixedRotation(true)
    player.collider:setCollisionClass("Player")
    player.collider:setFriction(0)
@@ -119,7 +128,7 @@ function player.setCharacter(characterName)
    player.collider:setPreSolve(function(collider_1, collider_2, contact)        
       if collider_1.collision_class == 'Player' and collider_2.collision_class == 'SemiSolid' then
          local px, py = collider_1:getPosition()
-         local ph = colliderHeight
+         local ph = player.colliderSize.height
          local tx, ty = collider_2:getPosition() 
          local th = 1
          if py + ph/2 > ty - th/2 then contact:setEnabled(false) end
@@ -128,7 +137,14 @@ function player.setCharacter(characterName)
 end
 
 
-function decideState()
+function player.setCharacter(characterName)
+   player.character = characterName
+   player.sprite = love.graphics.newImage("sprites/characters/" .. player.character .. ".png")
+   player.updateCollider()
+end
+
+
+function decideAnimationState()
    local pickup = player.holdingItem and "pickup" or ""
 
    if player.crouching > 0 then
@@ -183,11 +199,6 @@ function updateAcceleration(axis, joystick, velocity, dt)
 end
 
 
-function impulseForHeight(height) --> in tiles
-   return math.sqrt(2 * math.abs(GRAVITY * (height * 16)))
-end
-
-
 function player.update(dt)
    local joystick = CONTROLS.getJoystick()
    
@@ -199,7 +210,7 @@ function player.update(dt)
 
    local atx = player.acceleration.x * dt
 
-   local maxSpeedX = player.maxSpeeds.running
+   local maxSpeedX = CONTROLS.isDown("run") and player.maxSpeeds.running or player.maxSpeeds.walking
    local newVelocityX = math.clamp(velocity.x + atx, -maxSpeedX, maxSpeedX)
 
    player.collider:applyLinearImpulse(newVelocityX - velocity.x, 0)
@@ -207,7 +218,7 @@ function player.update(dt)
    local colliderWidth = 10
    local colliders = WORLD:queryRectangleArea(
       player.x - colliderWidth / 2,
-      player.y + player.size.height / 2 - 1,
+      player.y + player.colliderSize.height / 2 - 1,
       colliderWidth,
       2,
       {"Solid", "SemiSolid"}
@@ -215,70 +226,54 @@ function player.update(dt)
    player.onGround = (#colliders > 0) and (velocity.y >= 0)
 
    --> TODO: Jump buffering and coyote time
-   --> TODO: Separate in state machines
+
+   local newState = states[player.state].update(player, dt)
+
+   if newState and newState ~= player.state then
+      player.state = newState
+      states[player.state].enter(player, dt)
+   end
+
+   --> Crouching is not a state
    if player.onGround then
       if CONTROLS.isDown("down") then
          player.crouching = player.crouching + dt
       else
          player.crouching = 0
       end
-
-      player.jumpDone = false
-      if CONTROLS.isDown("jump") then --> Start jump
-         if not player.holdingJump then
-            player.jumping = player.jumping + dt
-            player.holdingJump = true
-
-            local impulse = impulseForHeight(player.maxJumpHeight)
-            player.collider:applyLinearImpulse(0, -impulse)
-         else
-            player.jumping = 0
-         end
-      else
-         player.jumping = 0
-         player.holdingJump = false
-      end
-   else
-      if CONTROLS.isDown("jump") then --> Continue jump
-         if player.jumping > 0 then
-            player.jumping = player.jumping + dt
-         else
-            player.holdingJump = true
-         end
-      else
-         player.holdingJump = false
-      end
    end
 
-   if (not player.jumpDone) and (not player.holdingJump) and (player.jumping > 0) then
-      --> Cut jump short
-      local velocity = VECTOR.new(player.collider:getLinearVelocity())
-      local desiredVelocityY = -impulseForHeight(player.minJumpHeight)
-
-      if velocity.y < desiredVelocityY then
-         player.collider:applyLinearImpulse(0, desiredVelocityY - velocity.y)
-         player.jumpDone = true
-      end
-   end
-
-   player.state = decideState()
-   player.animations[player.state].small:update(dt)
+   player.animationState = decideAnimationState()
+   player.animations[player.animationState][player.powerup]:update(dt)
 end
 
 
 function player.draw()
    --love.graphics.setColor(0,0.5,1,1)
    
-   player.animations[player.state].small:draw(
+   local position = VECTOR.new(player.collider:getPosition())
+   local velocity = VECTOR.new(player.collider:getLinearVelocity())
+
+   --[[
+   if math.abs(velocity.x) <= 0.1 then
+      position.x = math.floor(position.x + 0.5)
+   end
+   --]]
+   if math.abs(velocity.y) <= 0.1 then
+      position.y = math.floor(position.y + 0.5)
+   end
+
+   player.animations[player.animationState][player.powerup]:draw(
       player.sprite,
-      player.x, player.y,
+      position.x, position.y,
       nil,
       player.horizontal, 1,
-      player.size.width / 2, player.size.height / 2
+      player.spriteSize.width / 2, player.spriteSize.height / 2
    )
-
+   
    --> Debugging
    --[[
+   --love.graphics.rectangle("fill", player.x - player.size.width / 2, player.y - player.size.height / 2, player.size.width, player.size.height)
    if player.jumpDone then
       love.graphics.setColor(1,0,0,1)
       love.graphics.circle("fill", player.x, player.y - 20, 5)

@@ -19,6 +19,11 @@ function math.lerp(a, b, t)
 end
 
 
+function impulseForHeight(height) --> in tiles
+   return math.sqrt(2 * math.abs(GRAVITY * height * 16))
+end
+
+
 function loadMap(map)
    GAME_MAP = STI(map)
 
@@ -109,7 +114,7 @@ function love.load()
    CAMERA = require("libraries/camera")(0, 0, 3)
    VECTOR = require("libraries/vector")
    
-   GRAVITY = 40 * 16
+   GRAVITY = 60 * 16
    WORLD = windfield.newWorld(0, GRAVITY)
    WORLD:addCollisionClass("Player")
    WORLD:addCollisionClass("Solid")

@@ -3,25 +3,29 @@ CONTROLS = {}
 CONTROLS.actions = {}
 CONTROLS.actions.up = {}
 CONTROLS.actions.up.value = 0
-CONTROLS.actions.up.keys = {"w"}
+CONTROLS.actions.up.keys  = {"w", "up"}
 
 CONTROLS.actions.left = {}
 CONTROLS.actions.left.value = 0
-CONTROLS.actions.left.keys = {"a"}
+CONTROLS.actions.left.keys  = {"a", "left"}
 
 CONTROLS.actions.down = {}
 CONTROLS.actions.down.value = 0
-CONTROLS.actions.down.keys  = {"s"}
+CONTROLS.actions.down.keys  = {"s", "down"}
 
 CONTROLS.actions.right = {}
 CONTROLS.actions.right.value = 0
-CONTROLS.actions.right.keys = {"d"}
+CONTROLS.actions.right.keys  = {"d", "right"}
 
 CONTROLS.actions.jump = {}
 CONTROLS.actions.jump.value = 0
-CONTROLS.actions.jump.keys = {"space"}
+CONTROLS.actions.jump.keys  = {"space"}
 
+CONTROLS.actions.run = {}
+CONTROLS.actions.run.value = 0
+CONTROLS.actions.run.keys  = {"lshift", "rshift", "lctrl", "rctrl", "x"}
 
+--[[
 function CONTROLS.updateKey(key)
    for control, buttonTable in pairs(CONTROLS.actions) do
       for _, button in pairs(buttonTable) do
@@ -31,7 +35,7 @@ function CONTROLS.updateKey(key)
       end
    end
 end
-
+--]]
 
 function CONTROLS.isDown(control)
    local buttonTable = CONTROLS.actions[control].keys
