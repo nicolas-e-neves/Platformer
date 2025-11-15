@@ -37,18 +37,23 @@ player.maxSpeeds = {
    walking = 5 + 10/16,
    running = 8 + 7/16
 }
---285 acc on foot walk
---470 acc on foot run
---410
-player.accelerations = {
+
+--[[
    onFoot = 470,
    onFootTurning = 600,
    inAir = 410,
    inAirTurning = 500
+]]
+
+player.accelerations = {
+   onFoot = 29 + 6/16,
+   onFootTurning = 37 + 8/16,
+   inAir = 25 + 10/16,
+   inAirTurning = 31 + 4/16
 }
 
 player.deaccelerations = {
-   onFoot = 500
+   onFoot = 31 + 4/16
 }
 
 function player.updateCollider()
@@ -184,9 +189,9 @@ function updateAcceleration(axis, joystick, velocity, dt)
       local turning = (math.sign(velocity[axis]) ~= math.sign(joystick[axis])) and "Turning" or ""
 
       if player.onGround then
-         player.acceleration[axis] = player.accelerations["onFoot" .. turning]
+         player.acceleration[axis] = player.accelerations["onFoot" .. turning] * 16
       else
-         player.acceleration[axis] = player.accelerations["inAir" .. turning]
+         player.acceleration[axis] = player.accelerations["inAir" .. turning] * 16
       end
 
       player.acceleration[axis] = player.acceleration[axis] * direction
@@ -199,7 +204,7 @@ function updateAcceleration(axis, joystick, velocity, dt)
    end
 
    --> Account for friction
-   player.acceleration[axis] = player.deaccelerations.onFoot * -math.sign(velocity[axis])
+   player.acceleration[axis] = player.deaccelerations.onFoot * 16 * -math.sign(velocity[axis])
 
    local timeToStop = velocity[axis] / -player.acceleration[axis]
    if timeToStop < dt then
@@ -246,6 +251,9 @@ function player.update(dt)
       else
          player.crouching = 0
       end
+   else
+      --> Prevent the player from charging in the air
+      player.crouching = math.clamp(player.crouching, 0, dt)
    end
    
    --> TODO: Jump buffering and coyote time

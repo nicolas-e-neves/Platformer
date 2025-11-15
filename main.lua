@@ -117,15 +117,16 @@ function love.load()
    CAMERA = require("libraries/camera")(0, 0, 3)
    VECTOR = require("libraries/vector")
    
-   GRAVITY = 53.4375 * 16
+   love.physics.setMeter(16)
+   GRAVITY = 60 * 16
    WORLD = windfield.newWorld(0, GRAVITY)
    WORLD:addCollisionClass("Player")
    WORLD:addCollisionClass("Solid")
    WORLD:addCollisionClass("SemiSolid")
    
-   --> NES screen resolution 256x224
-   WINDOW_X, WINDOW_Y = 256 * CAMERA.scale, 224 * CAMERA.scale
-   GAME_X, GAME_Y = WINDOW_X / CAMERA.scale, WINDOW_Y / CAMERA.scale
+   --> NES screen resolution (PAL) 256x224
+   GAME_X, GAME_Y = 256, 224
+   WINDOW_X, WINDOW_Y = GAME_X * CAMERA.scale, GAME_Y * CAMERA.scale
    FULLSCREEN = false
 
    love.window.setTitle("Platformer")
@@ -135,9 +136,9 @@ function love.load()
    
    PALETTES = {}
    PALETTES.charge = love.graphics.newImage("sprites/palettes/character/charge.png")
-   
+
    player = require("modules/player/player")
-   player.setCharacter("luigi")
+   player.setCharacter("mario")
 
    SPRITES = {}
    SPRITES.sky = love.graphics.newImage("sprites/tiles/sky.png")
@@ -159,26 +160,16 @@ function clampCamera()
    local maxX, maxY = mapWidth - GAME_X / 2, mapHeight - GAME_Y / 2
 
    if minX > maxX then
-      CAMERA.x = mapWidth / 2
+      CAMERA.x = math.floor(mapWidth / 2 + 0.5)
    else
-      if CAMERA.x < GAME_X / 2 then
-         CAMERA.x = GAME_X / 2
-      end
-      if CAMERA.x > mapWidth - GAME_X / 2 then
-         CAMERA.x = mapWidth - GAME_X / 2
-      end
+      CAMERA.x = math.clamp(CAMERA.x, minX, maxX)
    end
 
    if minY > maxY then
       CAMERA.y = maxY
-      return
-   end
-   
-   if CAMERA.y < GAME_Y / 2 then
-      CAMERA.y = GAME_Y / 2
-   end
-   if CAMERA.y > mapHeight - GAME_Y / 2 then
-      CAMERA.y = mapHeight - GAME_Y / 2
+      --CAMERA.y = math.floor(mapHeight / 2 + 0.5)
+   else
+      CAMERA.y = math.clamp(CAMERA.y, minY, maxY)
    end
 end
 
@@ -205,8 +196,12 @@ function love.draw()
       0, 0,
       0,
       WINDOW_X, WINDOW_Y
+      --[[
+      GAME_MAP.width  * GAME_MAP.tilewidth,
+      GAME_MAP.height * GAME_MAP.tilewidth
+      --]]
    )
-   
+
    CAMERA:attach()
       GAME_MAP:drawLayer(GAME_MAP.layers["Background"])
       GAME_MAP:drawLayer(GAME_MAP.layers["Solid"])
