@@ -4,7 +4,13 @@ function JUMP.enter(player, dt)
    player.jumping = player.jumping + dt
    player.holdingJump = true
 
-   local impulse = impulseForHeight(player.maxJumpHeight)
+   local jumpHeight = player.maxJumpHeight
+   if player.crouching >= player.chargeTime then
+      jumpHeight = player.chargedJumpHeight
+      player.crouching = 0
+   end
+
+   local impulse = impulseForHeight(jumpHeight)
    player.collider:applyLinearImpulse(0, -impulse)
 end
 

@@ -57,6 +57,8 @@ function loadMap(map)
    wall:setType("static")
    table.insert(WALLS.solid, wall)
 
+   --[[
+   --> Ceiling
    wall = WORLD:newRectangleCollider(
       -50,
       -50,
@@ -65,6 +67,7 @@ function loadMap(map)
    )
    wall:setType("static")
    table.insert(WALLS.solid, wall)
+   --]]
 
    if GAME_MAP.layers["SolidCollision"] then
       for _, object in pairs(GAME_MAP.layers["SolidCollision"].objects) do
@@ -114,30 +117,32 @@ function love.load()
    CAMERA = require("libraries/camera")(0, 0, 3)
    VECTOR = require("libraries/vector")
    
-   GRAVITY = 60 * 16
+   GRAVITY = 53.4375 * 16
    WORLD = windfield.newWorld(0, GRAVITY)
    WORLD:addCollisionClass("Player")
    WORLD:addCollisionClass("Solid")
    WORLD:addCollisionClass("SemiSolid")
    
-   --> NES screen resolution 256x240
-   WINDOW_X, WINDOW_Y = 256 * CAMERA.scale, 240 * CAMERA.scale
+   --> NES screen resolution 256x224
+   WINDOW_X, WINDOW_Y = 256 * CAMERA.scale, 224 * CAMERA.scale
    GAME_X, GAME_Y = WINDOW_X / CAMERA.scale, WINDOW_Y / CAMERA.scale
-   FULLSCREEN = true
+   FULLSCREEN = false
 
    love.window.setTitle("Platformer")
    love.window.setMode(WINDOW_X, WINDOW_Y, {fullscreen = FULLSCREEN, resizable = true})
    love.graphics.setDefaultFilter("nearest")
    love.window.setIcon(love.image.newImageData("sprites/Mini DRENICO novo 40x40.png"))
-
+   
+   PALETTES = {}
+   PALETTES.charge = love.graphics.newImage("sprites/palettes/character/charge.png")
+   
    player = require("modules/player/player")
-   player.setCharacter("mario")
+   player.setCharacter("luigi")
 
    SPRITES = {}
    SPRITES.sky = love.graphics.newImage("sprites/tiles/sky.png")
    SPRITES.door = love.graphics.newImage("sprites/tiles/door.png")
 
-   PALETTES = {}
    loadMap("maps/1-1/map2.lua")
 
    SHADERS = {}
@@ -213,7 +218,6 @@ function love.draw()
          )
       end
 
-      SHADERS.pixelate:send("palette", PALETTES.character)
       player.draw()
 
       --WORLD:draw()

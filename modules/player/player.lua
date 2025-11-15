@@ -12,83 +12,14 @@ local states = {
    grounded = require("modules/player/groundedState")
 }
 
-player.grid = anim8.newGrid(player.spriteSize.width, player.spriteSize.height, 192, 64)
-player.animationState = "idle"
-player.animations = {
-   idle = {
-      small = anim8.newAnimation(player.grid('1-1',1), 1),
-      big   = anim8.newAnimation(player.grid('1-1',2), 1)
-   },
-
-   idlepickup = {
-      small = anim8.newAnimation(player.grid('3-3', 1), 1),
-      big   = anim8.newAnimation(player.grid('3-3', 2), 1)
-   },
-
-   walk = {
-      small = anim8.newAnimation(player.grid('1-2', 1), 0.05),
-      big   = anim8.newAnimation(player.grid('1-2', 2), 0.05)
-   },
-
-   walkpickup = {
-      small = anim8.newAnimation(player.grid('3-4', 1), 0.05),
-      big   = anim8.newAnimation(player.grid('3-4', 2), 0.05)
-   },
-   
-   fall = {
-      small = anim8.newAnimation(player.grid('2-2', 1), 1),
-      big   = anim8.newAnimation(player.grid('2-2', 2), 1)
-   },
-
-   fallpickup = {
-      small = anim8.newAnimation(player.grid('4-4', 1), 1),
-      big   = anim8.newAnimation(player.grid('4-4', 2), 1)
-   },
-   
-   jump = {
-      small = anim8.newAnimation(player.grid('4-4', 1), 1),
-      big   = anim8.newAnimation(player.grid('4-4', 2), 1)
-   },
-
-   climb = {
-      small = anim8.newAnimation(player.grid('5-5', 1), 0.2),
-      big   = anim8.newAnimation(player.grid('5-5', 2), 0.2)
-   },
-
-   crouch = {
-      small = anim8.newAnimation(player.grid('6-6', 1), 1),
-      big   = anim8.newAnimation(player.grid('6-6', 2), 1)
-   },
-
-   crouchpickup = {
-      small = anim8.newAnimation(player.grid('7-7', 1), 1),
-      big   = anim8.newAnimation(player.grid('7-7', 2), 1)
-   },
-
-   pickup = {
-      small = anim8.newAnimation(player.grid('8-8', 1), 1),
-      big   = anim8.newAnimation(player.grid('8-8', 2), 1)
-   },
-
-   throw = {
-      small = anim8.newAnimation(player.grid('9-9', 1), 1),
-      big   = anim8.newAnimation(player.grid('9-9', 2), 1)
-   },
-
-   die = {
-      small = anim8.newAnimation(player.grid('10-10', 1), 1),
-      big   = anim8.newAnimation(player.grid('10-10', 1), 1)
-   }
-}
-
-
 --> in tiles
 player.minJumpHeight = 1
-player.maxJumpHeight = 4
+player.maxJumpHeight = 3 + 4/16
+player.chargedJumpHeight = 5 + 6/16
+player.chargeTime = 1
 
 player.jumpDone = false
 player.holdingJump = false
-
 player.jumpBufferDuration = 0.1
 player.jumpBufferTimer = 0
 
@@ -103,19 +34,21 @@ player.powerup = "big"
 player.acceleration = VECTOR.new(0,0)
 
 player.maxSpeeds = {
-   walking = 90,
-   running = 130
+   walking = 5 + 10/16,
+   running = 8 + 7/16
 }
-
+--285 acc on foot walk
+--470 acc on foot run
+--410
 player.accelerations = {
-   onFoot = 320,
+   onFoot = 470,
    onFootTurning = 600,
-   inAir = 150,
-   inAirTurning = 400
+   inAir = 410,
+   inAirTurning = 500
 }
 
 player.deaccelerations = {
-   onFoot = 300
+   onFoot = 500
 }
 
 function player.updateCollider()
@@ -137,10 +70,86 @@ function player.updateCollider()
 end
 
 
+function player.createAnimationGrid()
+   local sheetWidth  = player.sprite:getWidth()
+   local sheetHeight = player.sprite:getHeight()
+
+   player.grid = anim8.newGrid(player.spriteSize.width, player.spriteSize.height, sheetWidth, sheetHeight)
+   player.animationState = "idle"
+   player.animations = {
+      idle = {
+         small = anim8.newAnimation(player.grid('1-1',1), 1),
+         big   = anim8.newAnimation(player.grid('1-1',2), 1)
+      },
+
+      idlepickup = {
+         small = anim8.newAnimation(player.grid('3-3', 1), 1),
+         big   = anim8.newAnimation(player.grid('3-3', 2), 1)
+      },
+
+      walk = {
+         small = anim8.newAnimation(player.grid('1-2', 1), 0.05),
+         big   = anim8.newAnimation(player.grid('1-2', 2), 0.05)
+      },
+
+      walkpickup = {
+         small = anim8.newAnimation(player.grid('3-4', 1), 0.05),
+         big   = anim8.newAnimation(player.grid('3-4', 2), 0.05)
+      },
+      
+      fall = {
+         small = anim8.newAnimation(player.grid('2-2', 1), 1),
+         big   = anim8.newAnimation(player.grid('2-2', 2), 1)
+      },
+
+      fallpickup = {
+         small = anim8.newAnimation(player.grid('4-4', 1), 1),
+         big   = anim8.newAnimation(player.grid('4-4', 2), 1)
+      },
+      
+      jump = {
+         small = anim8.newAnimation(player.grid('4-4', 1), 1),
+         big   = anim8.newAnimation(player.grid('4-4', 2), 1)
+      },
+
+      climb = {
+         small = anim8.newAnimation(player.grid('5-5', 1), 0.2),
+         big   = anim8.newAnimation(player.grid('5-5', 2), 0.2)
+      },
+
+      crouch = {
+         small = anim8.newAnimation(player.grid('6-6', 1), 1),
+         big   = anim8.newAnimation(player.grid('6-6', 2), 1)
+      },
+
+      crouchpickup = {
+         small = anim8.newAnimation(player.grid('7-7', 1), 1),
+         big   = anim8.newAnimation(player.grid('7-7', 2), 1)
+      },
+
+      pickup = {
+         small = anim8.newAnimation(player.grid('8-8', 1), 1),
+         big   = anim8.newAnimation(player.grid('8-8', 2), 1)
+      },
+
+      throw = {
+         small = anim8.newAnimation(player.grid('9-9', 1), 1),
+         big   = anim8.newAnimation(player.grid('9-9', 2), 1)
+      },
+
+      die = {
+         small = anim8.newAnimation(player.grid('10-10', 1), 1),
+         big   = anim8.newAnimation(player.grid('10-10', 1), 1)
+      }
+   }
+end
+
+
 function player.setCharacter(characterName)
    player.character = characterName
    player.sprite = love.graphics.newImage("sprites/characters/" .. player.character .. ".png")
    player.updateCollider()
+   player.createAnimationGrid()
 end
 
 
@@ -211,27 +220,23 @@ function player.update(dt)
    local atx = player.acceleration.x * dt
 
    local maxSpeedX = CONTROLS.isDown("run") and player.maxSpeeds.running or player.maxSpeeds.walking
+   maxSpeedX = maxSpeedX * 16
    local newVelocityX = math.clamp(velocity.x + atx, -maxSpeedX, maxSpeedX)
 
    player.collider:applyLinearImpulse(newVelocityX - velocity.x, 0)
 
    local colliderWidth = 10
-   local colliders = WORLD:queryRectangleArea(
-      player.x - colliderWidth / 2,
-      player.y + player.colliderSize.height / 2 - 1,
-      colliderWidth,
-      2,
-      {"Solid", "SemiSolid"}
-   )
-   player.onGround = (#colliders > 0) and (velocity.y >= 0)
 
-   --> TODO: Jump buffering and coyote time
-
-   local newState = states[player.state].update(player, dt)
-
-   if newState and newState ~= player.state then
-      player.state = newState
-      states[player.state].enter(player, dt)
+   player.onGround = false
+   if velocity.y <= 0 then
+      local colliders = WORLD:queryRectangleArea(
+         player.x - colliderWidth / 2,
+         player.y + player.colliderSize.height / 2 - 1,
+         colliderWidth,
+         2,
+         {"Solid", "SemiSolid"}
+      )
+      player.onGround = (#colliders > 0) and (velocity.y >= 0)
    end
 
    --> Crouching is not a state
@@ -241,6 +246,13 @@ function player.update(dt)
       else
          player.crouching = 0
       end
+   end
+   
+   --> TODO: Jump buffering and coyote time
+   local newState = states[player.state].update(player, dt)
+   if newState and newState ~= player.state then
+      player.state = newState
+      states[player.state].enter(player, dt)
    end
 
    player.animationState = decideAnimationState()
@@ -263,6 +275,12 @@ function player.draw()
       position.y = math.floor(position.y + 0.5)
    end
 
+   local palette = PALETTES.character
+   if player.crouching > player.chargeTime and (30 * player.crouching) % 1 <= 0.5 then
+      palette = PALETTES.charge
+   end
+
+   SHADERS.pixelate:send("palette", palette)
    player.animations[player.animationState][player.powerup]:draw(
       player.sprite,
       position.x, position.y,

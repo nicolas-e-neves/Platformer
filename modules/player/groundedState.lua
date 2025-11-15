@@ -6,7 +6,7 @@ end
 
 function GROUNDED.update(player, dt)
    if CONTROLS.isDown("jump") then
-      if not player.holdingJump then
+      if not player.holdingJump and player.onGround then
          return "jump"
       end
       player.holdingJump = true
