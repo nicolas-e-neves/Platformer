@@ -14,6 +14,13 @@ function GROUNDED.update(player, dt)
       player.holdingJump = false
    end
 
+   --> TEMPORARY
+   --[
+   if player.targetItem and CONTROLS.isDown("run") and love.keyboard.isDown("q") then
+      return "pickup"
+   end
+   --]]
+
    return
 end
 

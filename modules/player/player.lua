@@ -9,7 +9,8 @@ player.vertical = -1
 player.state = "grounded"
 local states = {
    jump = require("modules/player/jumpState"), 
-   grounded = require("modules/player/groundedState")
+   grounded = require("modules/player/groundedState"),
+   pickup = require("modules/player/pickupState")
 }
 
 --> in tiles
@@ -26,7 +27,11 @@ player.jumpBufferTimer = 0
 player.jumping = 0
 player.onGround = true
 player.crouching = 0
-player.holdingItem = false
+
+player.heldItem = nil
+player.targetItem = nil
+player.pickupTimer = 0
+player.throwing = 0
 
 player.health = 2
 player.powerup = "big"
@@ -63,13 +68,21 @@ function player.updateCollider()
    player.collider:setFriction(0)
    player.collider:setMass(1)
 
-   player.collider:setPreSolve(function(collider_1, collider_2, contact)        
+   player.collider:setPreSolve(function(collider_1, collider_2, contact)
       if collider_1.collision_class == 'Player' and collider_2.collision_class == 'SemiSolid' then
          local px, py = collider_1:getPosition()
          local ph = player.colliderSize.height
          local tx, ty = collider_2:getPosition() 
          local th = 1
          if py + ph/2 > ty - th/2 then contact:setEnabled(false) end
+         return
+      end
+
+      local cantCollide = (collider_2.parentItem and collider_2.parentItem.pickedUp) or (collider_2.body:getType() == "dynamic")
+
+      if cantCollide and collider_1.collision_class == 'Player' and collider_2.collision_class == 'Item' then
+         contact:setEnabled(false)
+         return
       end
   end)
 end
@@ -159,10 +172,21 @@ end
 
 
 function decideAnimationState()
-   local pickup = player.holdingItem and "pickup" or ""
+   if player.pickupTimer > 0 then
+      if player.pickupTimer < 0.187 then
+         return "crouchpickup"
+      end
+      return "pickup"
+   end
+
+   local pickup = (not player.heldItem) and "" or "pickup"
 
    if player.crouching > 0 then
       return "crouch" .. pickup
+   end
+
+   if player.throwing > 0 then
+      return "throw"
    end
 
    if player.jumping > 0 then
@@ -185,7 +209,7 @@ end
 function updateAcceleration(axis, joystick, velocity, dt)
    local direction = (axis == "x") and player.horizontal or player.vertical
 
-   if math.abs(joystick[axis]) > 0 and not (player.crouching ~= 0 and player.onGround) then
+   if math.abs(joystick[axis]) > 0 and not (player.crouching ~= 0 and player.pickupTimer ~= 0 and player.onGround) then
       local turning = (math.sign(velocity[axis]) ~= math.sign(joystick[axis])) and "Turning" or ""
 
       if player.onGround then
@@ -216,8 +240,10 @@ end
 function player.update(dt)
    local joystick = CONTROLS.getJoystick()
    
-   player.horizontal = math.sign(joystick.x, player.horizontal)
-   player.vertical = math.sign(joystick.y, player.vertical)
+   if player.pickupTimer <= 0 then
+      player.horizontal = math.sign(joystick.x, player.horizontal)
+      player.vertical = math.sign(joystick.y, player.vertical)
+   end
 
    local velocity = VECTOR.new(player.collider:getLinearVelocity())
    updateAcceleration("x", joystick, velocity, dt)
@@ -228,20 +254,34 @@ function player.update(dt)
    maxSpeedX = maxSpeedX * 16
    local newVelocityX = math.clamp(velocity.x + atx, -maxSpeedX, maxSpeedX)
 
-   player.collider:applyLinearImpulse(newVelocityX - velocity.x, 0)
+   if player.pickupTimer <= 0 then
+      player.collider:applyLinearImpulse(newVelocityX - velocity.x, 0)
+   else
+      player.collider:setLinearVelocity(0, 0)
+      player.collider:applyForce(0, -GRAVITY)
+   end
 
    local colliderWidth = 10
 
    player.onGround = false
+   player.targetItem = nil
+
    if velocity.y <= 0 then
       local colliders = WORLD:queryRectangleArea(
          player.x - colliderWidth / 2,
          player.y + player.colliderSize.height / 2 - 1,
          colliderWidth,
-         2,
-         {"Solid", "SemiSolid"}
+         5,
+         {"Solid", "SemiSolid", "Item"}
       )
-      player.onGround = (#colliders > 0) and (velocity.y >= 0)
+      player.onGround = (#colliders > 0)
+
+      for _, collider in pairs(colliders) do
+         if collider.collision_class == "Item" and collider.parentItem and not collider.parentItem.pickedUp then
+            player.targetItem = collider.parentItem
+            break
+         end
+      end
    end
 
    --> Crouching is not a state
@@ -256,6 +296,20 @@ function player.update(dt)
       player.crouching = math.clamp(player.crouching, 0, dt)
    end
    
+   --> Handling throwing items
+   player.throwing = math.max(0, player.throwing - dt)
+   if player.heldItem and CONTROLS.isDown("run") and love.keyboard.isDown("q") then
+      player.heldItem.collider:setType("dynamic")
+      player.heldItem.collider:setLinearVelocity(0, 0)
+
+      local throwImpulse = 304
+      player.heldItem.collider:applyLinearImpulse((throwImpulse + velocity.x) * player.horizontal, 0) --> TODO: calculate impulse for throwing
+      
+      player.heldItem.pickedUp = false
+      player.heldItem = nil
+      player.throwing = 0.167
+   end
+
    --> TODO: Jump buffering and coyote time
    local newState = states[player.state].update(player, dt)
    if newState and newState ~= player.state then

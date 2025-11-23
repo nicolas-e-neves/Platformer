@@ -9,8 +9,8 @@ return {
   height = 14,
   tilewidth = 16,
   tileheight = 16,
-  nextlayerid = 13,
-  nextobjectid = 43,
+  nextlayerid = 15,
+  nextobjectid = 45,
   properties = {},
   tilesets = {
     {
@@ -585,6 +585,35 @@ return {
           y = 32,
           width = 16,
           height = 160,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        }
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 13,
+      name = "Mushrooms",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {},
+      objects = {
+        {
+          id = 44,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 64,
+          y = 176,
+          width = 16,
+          height = 16,
           rotation = 0,
           visible = true,
           properties = {}

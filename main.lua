@@ -34,6 +34,12 @@ function loadMap(map)
    PALETTES.map = love.graphics.newImage("sprites/palettes/map/" .. mapPaletteName .. ".png") or PALETTES.map
    PALETTES.character = love.graphics.newImage("sprites/palettes/character/" .. characterPaletteName .. ".png") or PALETTES.character
 
+   ITEMS = {}
+   for _, object in pairs(GAME_MAP.layers["Mushrooms"].objects) do
+      local item = ITEM.new("mushroomblock1", object.x, object.y)
+      table.insert(ITEMS, item)
+   end
+
    WALLS = {}
    WALLS.solid = {}
    WALLS.semisolid = {}
@@ -116,6 +122,8 @@ function love.load()
    STI = require("libraries/sti")
    CAMERA = require("libraries/camera")(0, 0, 3)
    VECTOR = require("libraries/vector")
+
+   ITEM = require("modules/items/item")
    
    love.physics.setMeter(16)
    GRAVITY = 60 * 16
@@ -123,6 +131,7 @@ function love.load()
    WORLD:addCollisionClass("Player")
    WORLD:addCollisionClass("Solid")
    WORLD:addCollisionClass("SemiSolid")
+   WORLD:addCollisionClass("Item")
    
    --> NES screen resolution (PAL) 256x224
    GAME_X, GAME_Y = 256, 224
@@ -181,6 +190,16 @@ function love.update(dt)
    player.update(dt)
    WORLD:update(dt)
    player.x, player.y = player.collider:getPosition()
+   
+   for _, item in pairs(ITEMS) do
+      item:update(dt)
+   end
+
+   --> TEMPORARY
+   if player.heldItem then
+      local offset = (player.crouching <= 0) and -14 or -4
+      player.heldItem.collider:setPosition(player.x, player.y + offset)
+   end
 
    CAMERA:lookAt(player.x, player.y)
    clampCamera()
@@ -214,6 +233,11 @@ function love.draw()
       end
 
       player.draw()
+      SHADERS.pixelate:send("palette", PALETTES.map)
+
+      for _, item in pairs(ITEMS) do
+         item:draw()
+      end
 
       --WORLD:draw()
    CAMERA:detach()
