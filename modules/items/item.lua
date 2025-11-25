@@ -10,6 +10,12 @@ function item.new(type, x, y, params)
    params.bounces = 0
    params.onGround = true
 
+   --[[
+   params = {
+      disposable = true --> The item will go offscreen after thrown
+   }
+   ]]
+
    local self = setmetatable(params, item)
    self.type = type
    self.collider = WORLD:newRectangleCollider(x, y, 16, 16)
@@ -42,7 +48,7 @@ function item:update(dt)
    if velocity.y > 0 then return end
 
    local position = VECTOR.new(self.collider:getPosition())
-   local colliderWidth = 8
+   local colliderWidth = 16
    local colliderHeight = 1
 
    local colliders = WORLD:queryRectangleArea(
@@ -57,7 +63,7 @@ function item:update(dt)
    if self.onGround then
       if self.bounces < MAX_BOUNCES then
          self.bounces = self.bounces + 1
-         self.collider:applyLinearImpulse(0, -impulseForHeight(0.5))
+         self.collider:applyLinearImpulse(0, -velocity.y - impulseForHeight(0.5))
       else
          self.bounces = 0
          self.collider:setType("static")

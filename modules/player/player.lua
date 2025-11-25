@@ -173,7 +173,7 @@ end
 
 function decideAnimationState()
    if player.pickupTimer > 0 then
-      if player.pickupTimer < 0.187 then
+      if player.pickupTimer < 0.174 then
          return "crouchpickup"
       end
       return "pickup"
@@ -209,7 +209,7 @@ end
 function updateAcceleration(axis, joystick, velocity, dt)
    local direction = (axis == "x") and player.horizontal or player.vertical
 
-   if math.abs(joystick[axis]) > 0 and not (player.crouching ~= 0 and player.pickupTimer ~= 0 and player.onGround) then
+   if math.abs(joystick[axis]) > 0 and not (player.crouching ~= 0 and player.onGround) and player.pickupTimer == 0 then
       local turning = (math.sign(velocity[axis]) ~= math.sign(joystick[axis])) and "Turning" or ""
 
       if player.onGround then
@@ -274,7 +274,7 @@ function player.update(dt)
          5,
          {"Solid", "SemiSolid", "Item"}
       )
-      player.onGround = (#colliders > 0)
+      player.onGround = (#colliders > 0) and (velocity.y >= 0)
 
       for _, collider in pairs(colliders) do
          if collider.collision_class == "Item" and collider.parentItem and not collider.parentItem.pickedUp then
@@ -303,7 +303,7 @@ function player.update(dt)
       player.heldItem.collider:setLinearVelocity(0, 0)
 
       local throwImpulse = 304
-      player.heldItem.collider:applyLinearImpulse((throwImpulse + velocity.x) * player.horizontal, 0) --> TODO: calculate impulse for throwing
+      player.heldItem.collider:applyLinearImpulse(throwImpulse * player.horizontal + velocity.x, 0) --> TODO: calculate impulse for throwing
       
       player.heldItem.pickedUp = false
       player.heldItem = nil

@@ -3,11 +3,8 @@
  <editorsettings>
   <export target="map1.lua" format="lua"/>
  </editorsettings>
- <tileset firstgid="1" name="Tileset1" tilewidth="16" tileheight="16" tilecount="128" columns="16">
+ <tileset firstgid="1" name="Tileset" tilewidth="16" tileheight="16" tilecount="128" columns="16">
   <image source="../../sprites/tiles/Tilesets1.png" width="256" height="128"/>
- </tileset>
- <tileset firstgid="129" name="Tileset" tilewidth="16" tileheight="16" spacing="1" margin="1" tilecount="1971" columns="73">
-  <image source="../../sprites/tiles/Tilesets.png" trans="000000" width="1256" height="474"/>
  </tileset>
  <objectgroup id="2" name="Palette">
   <properties>

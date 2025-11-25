@@ -184,9 +184,12 @@ end
 
 
 function love.update(dt)
+   --dt = dt * 0.1 --> Slow down the game
+
    WINDOW_X, WINDOW_Y = love.window.getMode()
    GAME_X, GAME_Y = WINDOW_X / CAMERA.scale, WINDOW_Y / CAMERA.scale
 
+   GAME_MAP:update(dt)
    player.update(dt)
    WORLD:update(dt)
    player.x, player.y = player.collider:getPosition()
